@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  
+  <meta name="generator" content="Hugo 0.55.6" />
+
+  
+  <meta name="description" content="Develement Notes">
+  
+
+  
+  <link rel="apple-touch-icon" sizes="180x180" href="https://leewis101.github.io/apple-touch-icon.png">
+
+  
+  <link rel="icon" type="image/png" sizes="32x32" href="https://leewis101.github.io/favicon-32x32.png">
+
+  
+  <link rel="icon" type="image/png" sizes="16x16" href="https://leewis101.github.io/favicon-16x16.png">
+
+  
+  <link rel="manifest" href="https://leewis101.github.io/site.webmanifest">
+
+  
+  <link rel="mask-icon" href="https://leewis101.github.io/safari-pinned-tab.svg" color="">
+
+  <meta name="msapplication-TileColor" content="">
+
+  <meta name="theme-color" content="">
+
+  
+  <link rel="stylesheet" href="https://leewis101.github.io/css/bootstrap.min.css" />
+
+  
+  <title>GlusterFS in Kubernetes | Develement Notes</title>
+  
+
+  <style>
+body {
+  min-width: 300px;
+}
+
+.custom-navbar {
+  margin-bottom: 1em;
+  height: 60px;
+}
+
+.custom-navbar a {
+  display: inline-block; 
+  padding: 18px 0;
+  margin-right: 1em; 
+  font-weight: bold; 
+}
+
+.custom-navbar a:hover,
+.custom-navbar a:focus {
+  text-decoration: none; 
+}
+
+@media print {
+  .custom-navbar {
+    display: none;
+  }
+}
+
+article {
+  padding-bottom: 1em;
+}
+
+img {
+  max-width: 100%;
+}
+
+
+body {
+  background-color: #fff;
+}
+
+
+
+body {
+  color: #212529;
+}
+
+
+
+a {
+  color: #007bff;
+}
+
+
+
+a:hover,
+a:focus {
+  color: #0056b3;
+}
+
+
+
+.custom-navbar {
+  background-color: #212529;
+}
+
+
+
+.custom-navbar a {
+  color: rgba(255,255,255,.75);
+}
+
+
+
+.custom-navbar a:hover,
+.custom-navbar a:focus {
+  color: rgba(255,255,255,1);
+}
+
+
+
+.container {
+  max-width: 800px;
+}
+
+
+
+pre {
+  display: block;
+  padding: 9.5px;
+  word-break: break-all;
+  word-wrap: break-word;
+  background-color: #f5f5f5;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+pre code {
+  padding: 0;
+  font-size: inherit;
+  color: inherit; 
+  white-space: pre-wrap;
+  background-color: transparent;
+  border: none;
+  border-radius: 0;
+}
+
+code {
+  padding: 2px 4px;
+  color: inherit; 
+  background-color: #f5f5f5;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: .9em;
+}
+
+
+
+blockquote,
+.blockquote {
+  padding: 10px 20px;
+  margin: 0 0 20px;
+  font-size: 1em;
+  border-left: 5px solid #6c757d;
+}
+
+</style>
+</head>
+
+<body>
+  <nav class="custom-navbar">
+  <div class="container">
+    
+    <a href="/">Posts</a>
+    
+    <a href="/tags/">Tags</a>
+    
+  </div>
+</nav>
+  
+  <div class="container">
+    <article>
+      <h1>GlusterFS in Kubernetes</h1>
+<p>
+  <small class="text-secondary">
+  
+  
+  2019-06-25
+  </small>
+  
+
+<small><code><a href="https://leewis101.github.io/tags/k8s">k8s</a></code></small>
+
+
+<small><code><a href="https://leewis101.github.io/tags/pv">pv</a></code></small>
+
+
+<small><code><a href="https://leewis101.github.io/tags/glusterfs">glusterfs</a></code></small>
+
+</p>
+
+
+<h2 id="clone-repo">Clone repo</h2>
+
+<pre><code class="language-sh">$ git clone https://github.com/kubernetes-incubator/external-storage &amp;&amp; cd external-storage/gluster/glusterfs
+</code></pre>
+
+<h2 id="create-namesapce">Create namesapce</h2>
+
+<pre><code class="language-sh">$ kubectl create namespace glusterfs
+</code></pre>
+
+<h2 id="label-storage-node">Label storage node</h2>
+
+<pre><code>$ kubectl label node &lt;storage-node-name&gt; storagenode=glusterfs
+</code></pre>
+
+<h2 id="start-glusterfs">Start GlusterFS</h2>
+
+<h3 id="glusterfs-daemonset-yaml-add-brick-path">glusterfs-daemonset.yaml add brick path</h3>
+
+<p>deploy/glusterfs-daemonset.yaml add volume for storageclass <code>brickrootPaths</code></p>
+
+<pre><code class="language-yaml">containers:
+- image: gluster/gluster-centos:latest
+  volumeMounts:
+  - name: glusterfs-bricks
+    mountPath: &quot;/glusterfs/bricks&quot;
+  volumes:
+  - name: glusterfs-bricks
+    hostPath:
+      path: &quot;/glusterfs/bricks&quot;
+</code></pre>
+
+<h3 id="bring-up-glustefs-daemonset">Bring up Glustefs daemonset</h3>
+
+<pre><code>$ kubectl -n glusterfs create -f deploy/glusterfs-daemonset.yaml
+</code></pre>
+
+<h3 id="check-glusterfs-pod">Check glusterfs pod</h3>
+
+<pre><code>$ kubectl -n glusterfs get pods -l glusterfs-node=pod -w
+</code></pre>
+
+<h3 id="locate-your-pod-ips">Locate your pod IPs</h3>
+
+<pre><code>$ kubectl -n glusterfs get pods -o wide -l glusterfs-node=pod
+
+NAME              READY   STATUS    RESTARTS   AGE   IP              NODE            NOMINATED NODE   READINESS GATES
+glusterfs-zd8b8   1/1     Running   0          1m   192.168.44.2     worker01          &lt;none&gt;           &lt;none&gt;
+glusterfs-fdczh   1/1     Running   0          1m   192.168.44.3     worker02          &lt;none&gt;           &lt;none&gt;
+</code></pre>
+
+<p>configure iptables</p>
+
+<pre><code># iptables -A INPUT -p all -s 192.168.44.0/24 -j ACCEPT
+</code></pre>
+
+<h3 id="perform-gluster-peer-probe">Perform gluster peer probe</h3>
+
+<pre><code>$ kubectl -n glusterfs exec -ti glusterfs-zd8b8 gluster peer probe 192.168.44.3
+</code></pre>
+
+<h2 id="configure-rbac">Configure RBAC</h2>
+
+<p>rabc.yaml add <code>namespace</code></p>
+
+<pre><code class="language-yaml">apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: glfs-provisioner
+  namespace: glusterfs
+
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: run-glfs-provisioner
+subjects:
+  - kind: ServiceAccount
+    name: glfs-provisioner
+    namespace: glusterfs
+</code></pre>
+
+<p>create rbac</p>
+
+<pre><code>$ kubectl create -f deploy/rbac.yaml
+</code></pre>
+
+<h2 id="create-a-glusterfs-simple-storage-class">Create a glusterfs-simple Storage Class</h2>
+
+<p>storageclass.yaml</p>
+
+<pre><code class="language-yaml">kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: glusterfs-simple
+provisioner: gluster.org/glusterfs-simple
+parameters:
+  forceCreate: &quot;true&quot;
+  brickrootPaths: &quot;192.168.44.2:/glusterfs/bricks,192.168.44.3:/glusterfs/bricks&quot;
+  volumeType: &quot;replica 2&quot;
+</code></pre>
+
+<pre><code>$ kubectl create -f deploy/storageclass.yaml
+</code></pre>
+
+<h2 id="test">Test</h2>
+
+<pre><code>$ kubectl -n glusterfs create -f deploy/pvc.yaml
+$ kubectl -n glusterfs get pvc 
+</code></pre>
+
+<h1 id="references">References</h1>
+
+<p><a href="https://github.com/kubernetes-incubator/external-storage/tree/master/gluster/glusterfs">https://github.com/kubernetes-incubator/external-storage/tree/master/gluster/glusterfs</a></p>
+
+<p><a href="https://opensource.ncsa.illinois.edu/confluence/display/~lambert8/GlusterFS+in+Kubernetes">https://opensource.ncsa.illinois.edu/confluence/display/~lambert8/GlusterFS+in+Kubernetes</a></p>
+
+    </article>
+  </div>
+
+  
+  
+  
+
+  
+</body>
+
+</html>

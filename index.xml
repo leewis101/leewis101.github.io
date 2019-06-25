@@ -13,10 +13,10 @@
     
     <item>
       <title>GlusterFS in Kubernetes</title>
-      <link>https://leewis101.github.io/posts/glusterfs-in-kubernetes/</link>
+      <link>https://leewis101.github.io/glusterfs-in-kubernetes/</link>
       <pubDate>Tue, 25 Jun 2019 18:46:02 +0800</pubDate>
       
-      <guid>https://leewis101.github.io/posts/glusterfs-in-kubernetes/</guid>
+      <guid>https://leewis101.github.io/glusterfs-in-kubernetes/</guid>
       <description>Clone repo $ git clone https://github.com/kubernetes-incubator/external-storage &amp;amp;&amp;amp; cd external-storage/gluster/glusterfs  Create namesapce $ kubectl create namespace glusterfs  Label storage node $ kubectl label node &amp;lt;storage-node-name&amp;gt; storagenode=glusterfs  Start GlusterFS glusterfs-daemonset.yaml add brick path deploy/glusterfs-daemonset.yaml add volume for storageclass brickrootPaths
 containers: - image: gluster/gluster-centos:latest volumeMounts: - name: glusterfs-bricks mountPath: &amp;quot;/glusterfs/bricks&amp;quot; volumes: - name: glusterfs-bricks hostPath: path: &amp;quot;/glusterfs/bricks&amp;quot;  Bring up Glustefs daemonset $ kubectl -n glusterfs create -f deploy/glusterfs-daemonset.yaml  Check glusterfs pod $ kubectl -n glusterfs get pods -l glusterfs-node=pod -w  Locate your pod IPs $ kubectl -n glusterfs get pods -o wide -l glusterfs-node=pod NAME READY STATUS RESTARTS AGE IP NODE NOMINATED NODE READINESS GATES glusterfs-zd8b8 1/1 Running 0 1m 192.</description>
     </item>
